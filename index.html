@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Seam Carving Demo</title>
+    <link rel="stylesheet" href="/dist/seamcarving.css" />
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="/dist/seamcarving.js"></script>
+  </head>
+  <body>
+    <div class="ctrl">
+      <input type="file" data-file />
+      <button data-render-seam disabled>VIEW SEAM</button>
+      <button data-cut-seam disabled>CUT SEAM</button>
+      <button data-cut-seam-5px>CUT 50px</button>
+    </div>
+    <div class="seam-carving-wrapper"></div>
+  </body>
+  <script>
+    const cutSeam = (seamCarving, cnt) => {
+      seamCarving.cutVSeam()
+      if (cnt > 0) {
+        setTimeout(() => {
+          cutSeam(seamCarving, cnt - 1)
+        })
+      }
+    }
+    $(document).ready(() => {
+      const seamCarving = seamcarving.init(
+        document.querySelector('.seam-carving-wrapper')
+      )
+      const btnRender = $('[data-render-seam]')
+      const btnCut = $('[data-cut-seam]')
+      $('[data-file]').on('change', (e) => {
+        seamCarving.render(e.target.files[0])
+        btnRender.prop('disabled', false)
+      })
+      btnRender.click(() => {
+        seamCarving.renderVSeam()
+        btnCut.prop('disabled', false)
+      })
+      btnCut.click(() => {
+        seamCarving.cutVSeam()
+        btnCut.prop('disabled', true)
+      })
+      $('[data-cut-seam-5px]').click(() => {
+        cutSeam(seamCarving, 50)
+      })
+    })
+  </script>
+</html>
