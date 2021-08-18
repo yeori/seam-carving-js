@@ -108,7 +108,7 @@ class SeamCarving {
     })
   }
   renderVSeam() {
-    this.canvas.resolveVerticalSeam()
+    this.canvas.resolveVerticalSeam(true)
   }
   cutVSeam(cutSize) {
     const size = cutSize || 1
