@@ -139,7 +139,7 @@ class Canvas {
       let offset = SIZE * (this.width * y + vseam[y])
       const start = offset + SIZE
       const end = SIZE * (this.width * y + viewport.width - 1)
-      data.copyWithin(offset, start, end)
+      data.copyWithin(offset, start, end + SIZE)
       data[end + 0] = 255
       data[end + 1] = 0
       data[end + 2] = 0
