@@ -52,6 +52,9 @@ class EventBus {
       }
     })
   }
+  hasListeners(eventName) {
+    return !!this.callbacks.get(eventName)
+  }
 }
 
 const closest = (elem, selector) => {

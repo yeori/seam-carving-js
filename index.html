@@ -100,21 +100,17 @@
     </div>
   </body>
   <script>
-    const cutSeam = (seamCarving, cnt, ctx) => {
-      seamCarving.cutVSeam()
-      if (cnt > 0) {
-        setTimeout(() => {
-          cutSeam(seamCarving, cnt - 1, ctx)
-        })
-      } else {
-        const diff = performance.now() - ctx.startTime
-        console.log(`${diff}msec`)
-      }
-    }
     $(document).ready(() => {
       const seamCarving = seamcarving.init(
         document.querySelector('.seam-carving-wrapper')
       )
+      seamCarving
+        // .on('progress', (state) => {
+        //   console.log('PROGRESS', state, JSON.stringify(state.dim))
+        // })
+        .on('done', (state) => {
+          console.log('DONE', state.totalTime, state.avgTime)
+        })
       const btnRender = $('[data-render-seam]')
       const btnCut = $('[data-cut-seam]')
       const btnCutBy50px = $('[data-cut-seam-50px]')
@@ -132,7 +128,8 @@
         btnCut.prop('disabled', true)
       })
       btnCutBy50px.click(() => {
-        cutSeam(seamCarving, 50, { startTime: performance.now() })
+        // cutSeam(seamCarving, 50, { startTime: performance.now() })
+        seamCarving.cutVSeam(50)
       })
     })
   </script>

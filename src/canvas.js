@@ -168,6 +168,12 @@ class Canvas {
   get height() {
     return this.$$.imgSource.height
   }
+  get viewportWidth() {
+    return this.$$.viewport.width
+  }
+  get viewportHeight() {
+    return this.$$.viewport.height
+  }
 }
 export { Canvas }
 export default Canvas
