@@ -37,7 +37,7 @@ const calcuateEnerge = (imageData, viewport, W, H) => {
         left = offset - 1
         const diffLR = diff(left, right, data)
         const diffTB = diff(top, bottom, data)
-        energes[y][x] = parseInt(Math.sqrt(diffLR + diffTB) * 1000) / 1000
+        energes[y][x] = parseInt(Math.sqrt(diffLR + diffTB))
       }
     }
   }
@@ -97,7 +97,7 @@ const cutEnergyByVSeam = (canvas) => {
       left = offset - 1
       const diffLR = diff(left, right, data)
       const diffTB = diff(top, bottom, data)
-      canvas.energies[y][x] = parseInt(Math.sqrt(diffLR + diffTB) * 1000) / 1000
+      energes[y][x] = parseInt(Math.sqrt(diffLR + diffTB))
     }
   }
 }
@@ -146,8 +146,8 @@ class Canvas {
       data[end + 3] = 255
 
       // mark edge of energies
-      // this.energies[y].copyWithin(vseam[y], vseam[y] + 1, viewport.width)
-      if (y > 0 || y + 1 < viewport.height) {
+      this.energies[y].copyWithin(vseam[y], vseam[y] + 1, viewport.width)
+      if (y > 0 && y + 1 < viewport.height) {
         let x = vseam[y]
 
         if (x === 0 || x + 1 === viewport.width - 1) {
@@ -160,8 +160,7 @@ class Canvas {
           const left = offset - 1
           const diffLR = diff(left, right, data)
           const diffTB = diff(top, bottom, data)
-          this.energies[y][x] =
-            parseInt(Math.sqrt(diffLR + diffTB) * 1000) / 1000
+          this.energies[y][x] = parseInt(Math.sqrt(diffLR + diffTB))
         }
 
         x = vseam[y] - 1
@@ -177,8 +176,7 @@ class Canvas {
           const left = offset - 1
           const diffLR = diff(left, right, data)
           const diffTB = diff(top, bottom, data)
-          this.energies[y][x] =
-            parseInt(Math.sqrt(diffLR + diffTB) * 1000) / 1000
+          this.energies[y][x] = parseInt(Math.sqrt(diffLR + diffTB))
         }
       }
     }
