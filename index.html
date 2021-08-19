@@ -74,6 +74,9 @@
         box-shadow: 0px 0px 2px 0px #0350c5;
         padding: 0px 8px;
       }
+      .ctrl button.icon {
+        padding: 0;
+      }
       .ctrl button[disabled] {
         background-color: #efefef;
         color: #afafaf;
@@ -95,6 +98,11 @@
         <button data-cut-seam disabled>CUT SEAM</button>
         <div class="form-item gap"></div>
         <button data-cut-seam-50px disabled>CUT 50px</button>
+        <div class="form-item gap"></div>
+        <div class="form-item gap"></div>
+        <button class="icon" data-save disabled>
+          <img src="/assets/icon_save.svg" />
+        </button>
       </div>
       <div class="seam-carving-wrapper"></div>
     </div>
@@ -114,10 +122,13 @@
       const btnRender = $('[data-render-seam]')
       const btnCut = $('[data-cut-seam]')
       const btnCutBy50px = $('[data-cut-seam-50px]')
+      const btnSave = $('[data-save]')
+      const btns = [btnCut, btnCutBy50px, btnRender, btnSave]
       $('[data-file]').on('change', (e) => {
         seamCarving.render(e.target.files[0])
-        btnRender.prop('disabled', false)
-        btnCutBy50px.prop('disabled', false)
+        // btnRender.prop('disabled', false)
+        // btnCutBy50px.prop('disabled', false)
+        btns.forEach((btn) => btn.prop('disabled', false))
       })
       btnRender.click(() => {
         seamCarving.renderVSeam()
@@ -130,6 +141,13 @@
       btnCutBy50px.click(() => {
         // cutSeam(seamCarving, 50, { startTime: performance.now() })
         seamCarving.cutVSeam(50)
+      })
+      btnSave.click(() => {
+        const meta = seamCarving.capture()
+        const a = document.createElement('a')
+        a.setAttribute('href', meta.image)
+        a.setAttribute('download', meta.fileName)
+        a.click()
       })
     })
   </script>

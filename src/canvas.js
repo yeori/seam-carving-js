@@ -10,54 +10,53 @@ const diff = (posA, posB, data) => {
   const b = data[offsetA + 2] - data[offsetB + 2]
   return r * r + g * g + b * b
 }
-const calcuateEnerge = (imageData, viewport, W, H) => {
+const calcuateEnerge = (energies, imageData, viewport, W, H) => {
   const { data } = imageData
-  // const { width, height } = viewport
-  const energes = []
-  // console.log(data)
-  // data[0] = data[1]
+  const { width: vw, height: vh } = viewport
   const sz = 4 // RGBA
-  let top, right, bottom, left
-  let offset
-  for (let y = 0; y < viewport.height; y++) {
-    const rows = new Array(viewport.width)
-    energes.push(rows)
-    if (y === 0 || y + 1 === viewport.height) {
-      rows.fill(ENERGY_AT_BORDER)
-      continue
-    }
-    for (let x = 0; x < viewport.width; x++) {
-      if (x === 0 || x + 1 === viewport.width) {
-        rows[x] = ENERGY_AT_BORDER
-      } else {
-        offset = x + y * W
-        top = offset - W
-        right = offset + 1
-        bottom = offset + W
-        left = offset - 1
-        const diffLR = diff(left, right, data)
-        const diffTB = diff(top, bottom, data)
-        energes[y][x] = parseInt(Math.sqrt(diffLR + diffTB) * 1000) / 1000
-      }
+  let start = 0
+  let end
+
+  end = W
+  energies.fill(ENERGY_AT_BORDER, start, end)
+
+  start = (vh - 1) * W
+  end = start + W
+  energies.fill(ENERGY_AT_BORDER, start, end)
+
+  let offset, top, right, bottom, left
+  for (let y = 1; y < vh - 1; y++) {
+    start = y * W
+    energies[start] = ENERGY_AT_BORDER
+    energies[start + vw - 1] = ENERGY_AT_BORDER
+    for (let x = 1; x < vw - 1; x++) {
+      offset = start + x
+      top = offset - W
+      right = offset + 1
+      bottom = offset + W
+      left = offset - 1
+      const diffLR = diff(left, right, data)
+      const diffTB = diff(top, bottom, data)
+      energies[offset] = diffLR + diffTB
     }
   }
-  return energes
 }
-const minIndexAt = (arr, l, m, r) => {
+const minIndexAt = (arr, width, l, m, r) => {
   let index = l < 0 ? m : arr[l] < arr[m] ? l : m
-  index = r === arr.length ? index : arr[index] <= arr[r] ? index : r
+  index = r === width ? index : arr[index] <= arr[r] ? index : r
   return index
 }
-const vSeam = (energies, width, height) => {
+function vSeam(energies, viewport, imgWidth, imgHeight) {
   const pathes = []
-  let prevs = [...energies[0]]
+  const { width, height } = viewport
+  let prevs = energies.slice(0, imgWidth)
   let rows = []
   // let L, M, R // left, mid, right index
   for (let y = 1; y < height; y++) {
-    rows = [...energies[y]]
+    rows = energies.slice(y * imgWidth, y * imgWidth + imgWidth)
     const path = new Array(width)
     for (let x = 0; x < width; x++) {
-      const minIdx = minIndexAt(prevs, x - 1, x, x + 1)
+      const minIdx = minIndexAt(prevs, width, x - 1, x, x + 1)
       path[x] = minIdx
       rows[x] += prevs[minIdx]
     }
@@ -67,7 +66,7 @@ const vSeam = (energies, width, height) => {
   // find min
   let minIndex = 0
   rows.forEach((val, index) => {
-    if (val < rows[minIndex]) {
+    if (index < width && val < rows[minIndex]) {
       minIndex = index
     }
   })
@@ -80,6 +79,16 @@ const vSeam = (energies, width, height) => {
   // console.log(p)
   return p.reverse()
 }
+const updateEnergieAt = (data, energies, offset, x, y, W, H) => {
+  let top = offset - W
+  let right = offset + 1
+  let bottom = offset + W
+  let left = offset - 1
+  const diffLR = diff(left, right, data)
+  const diffTB = diff(top, bottom, data)
+  energies[offset] = diffLR + diffTB
+}
+
 class Canvas {
   constructor($parentEl) {
     const canvas = dom.tag.canvas(null, $parentEl)
@@ -104,28 +113,63 @@ class Canvas {
       width,
       height
     }
+    const flatLength = width * height
+    this.energies = new Uint32Array(flatLength)
+
     this.repaint()
+
+    calcuateEnerge(
+      this.energies,
+      this.$$.imageData,
+      this.$$.viewport,
+      this.width,
+      this.height
+    )
   }
   cutVSeam() {
     if (!this.$$.vseam) {
       this.resolveVerticalSeam()
     }
     const SIZE = 4
+    const { energies } = this
     const { vseam, viewport, imageData } = this.$$
     const { data } = imageData
+    const imageWidth = this.width
+    const imageHeight = this.height
+    let offset
+    // skip first row - all 1000
     for (let y = 0; y < viewport.height; y++) {
-      const offset = SIZE * (this.width * y + vseam[y])
-      const start = offset + SIZE
-      const end = SIZE * (this.width * y + viewport.width - 1)
-      data.copyWithin(offset, start, end + SIZE)
-      data[end + 0] = 255
-      data[end + 1] = 0
-      data[end + 2] = 0
-      data[end + 3] = 255
+      offset = imageWidth * y + vseam[y]
+      const start = offset + 1
+      const end = imageWidth * y + viewport.width
+      data.copyWithin(SIZE * offset, SIZE * start, SIZE * end)
+      // data[end + 0] = 0
+      // data[end + 1] = 0
+      // data[end + 2] = 0
+      // data[end + 3] = 255
+      energies.copyWithin(offset, start, end)
     }
     viewport.width -= 1
     this.$$.vseam = null
-    this.energies = null
+
+    for (let y = 1; y < viewport.height - 1; y++) {
+      let x = vseam[y]
+      offset = imageWidth * y + x
+      if (x > 0) {
+        updateEnergieAt(data, energies, offset, x, y, imageWidth, imageHeight)
+        if (x - 1 > 0) {
+          updateEnergieAt(
+            data,
+            energies,
+            offset - SIZE,
+            x - 1,
+            y,
+            imageWidth,
+            imageHeight
+          )
+        }
+      }
+    }
     this.repaint()
   }
   renderVerticalSeam(seam) {
@@ -146,21 +190,32 @@ class Canvas {
       ctx.drawImage(imgSource.image, 0, 0)
       this.$$.imageData = ctx.getImageData(0, 0, this.width, this.height)
     }
-    ctx.putImageData(this.$$.imageData, 0, 0)
+    ctx.putImageData(
+      this.$$.imageData,
+      0,
+      0,
+      0,
+      0,
+      this.viewportWidth,
+      this.viewportHeight
+    )
   }
-  resolveVerticalSeam() {
-    if (!this.energies) {
-      this.energies = calcuateEnerge(
-        this.$$.imageData,
-        this.$$.viewport,
-        this.width,
-        this.height
-      )
-    }
-    const { width, height } = this.$$.viewport
-    const seam = vSeam(this.energies, width, height)
+  resolveVerticalSeam(renderSeam) {
+    const seam = vSeam(this.energies, this.$$.viewport, this.width, this.height)
     this.$$.vseam = seam
-    this.renderVerticalSeam(seam)
+    if (renderSeam) {
+      this.renderVerticalSeam(seam)
+    }
+  }
+  capture() {
+    const { ctx } = this.$$
+    const { width, height } = this.$$.viewport
+    const imageData = ctx.getImageData(0, 0, width, height)
+    const canvas = document.createElement('canvas')
+    canvas.width = width
+    canvas.height = height
+    canvas.getContext('2d').putImageData(imageData, 0, 0)
+    return { width, height, type: 'data-url', image: canvas.toDataURL() }
   }
   get width() {
     return this.$$.imgSource.width
