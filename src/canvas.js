@@ -15,25 +15,22 @@ const calcuateEnerge = (energies, imageData, viewport, W, H) => {
   const sz = 4 // RGBA
   let top, right, bottom, left
   let offset
-  for (let y = 0; y < viewport.height; y++) {
-    const rows = energies[y]
-    if (y === 0 || y + 1 === viewport.height) {
-      rows.fill(ENERGY_AT_BORDER)
-      continue
-    }
-    for (let x = 0; x < viewport.width; x++) {
-      if (x === 0 || x + 1 === viewport.width) {
-        rows[x] = ENERGY_AT_BORDER
-      } else {
-        offset = x + y * W
-        top = offset - W
-        right = offset + 1
-        bottom = offset + W
-        left = offset - 1
-        const diffLR = diff(left, right, data)
-        const diffTB = diff(top, bottom, data)
-        rows[x] = parseInt(Math.sqrt(diffLR + diffTB))
-      }
+  energies[0].fill(ENERGY_AT_BORDER)
+  energies[viewport.height - 1].fill(ENERGY_AT_BORDER)
+  for (let y = 1; y < viewport.height - 1; y++) {
+    // const rows = energies[y]
+    energies[y][0] = ENERGY_AT_BORDER
+    energies[y][viewport.width - 1] = ENERGY_AT_BORDER
+    for (let x = 1; x < viewport.width - 1; x++) {
+      offset = x + y * W
+      top = offset - W
+      right = offset + 1
+      bottom = offset + W
+      left = offset - 1
+      const diffLR = diff(left, right, data)
+      const diffTB = diff(top, bottom, data)
+      // energies[y][x] = Math.sqrt(diffLR + diffTB)
+      energies[y][x] = diffLR + diffTB // skip square root for performance
     }
   }
 }
@@ -118,10 +115,10 @@ class Canvas {
       const start = offset + SIZE
       const end = SIZE * (this.width * y + viewport.width - 1)
       data.copyWithin(offset, start, end + SIZE)
-      data[end + 0] = 255
-      data[end + 1] = 0
-      data[end + 2] = 0
-      data[end + 3] = 255
+      // data[end + 0] = 0
+      // data[end + 1] = 0
+      // data[end + 2] = 0
+      // data[end + 3] = 255
     }
     viewport.width -= 1
     // this.energies = null
