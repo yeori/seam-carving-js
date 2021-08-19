@@ -101,7 +101,8 @@ class SeamCarving {
         image,
         width: image.width,
         height: image.height,
-        size: file.size
+        size: file.size,
+        originName: file.name
       }
       this.canvas.setImageSource(this.$$.imageSource)
       // this.seam()
@@ -120,6 +121,11 @@ class SeamCarving {
     const name = resolveEventName(eventName)
     this.eventBus.on(name, callback)
     return this
+  }
+  capture() {
+    const meta = this.canvas.capture()
+    meta.fileName = this.$$.imageSource.originName
+    return meta
   }
   get eventBus() {
     return this.$$.ebus
